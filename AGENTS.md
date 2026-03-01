@@ -17,6 +17,29 @@
 - Provider integration: `src/providers/SttProvider.ts` -> `src/providers/YandexSttProvider.ts`
 - Route tests: `test/transcribe/`
 
+## VM Deploy Access
+
+- SSH alias: `metafabrika-voice-vm` (configured in `~/.ssh/config`)
+- VM login: `artem@158.160.198.31`
+- SSH key path on local machine: `~/.ssh/metafabrika_voice_artem`
+- Repo path on VM: `/home/artem/metafabrika-voice`
+- Service manager on VM: `systemd` service `metafabrika-voice.service`
+
+### Standard VM Update Flow
+
+1. `ssh metafabrika-voice-vm`
+2. `cd /home/artem/metafabrika-voice`
+3. `git fetch --all --prune`
+4. `git checkout codex/stage1-stt-mvp && git pull --ff-only origin codex/stage1-stt-mvp`
+5. `npm ci && npm run build`
+6. `sudo systemctl restart metafabrika-voice.service`
+7. `curl -sS http://127.0.0.1:8080/ready`
+
+### Safety
+
+- Never print private key contents.
+- Never commit SSH keys or `.env` secrets.
+
 ## Guardrails
 
 - Keep public API response shapes stable unless task explicitly changes contract.
