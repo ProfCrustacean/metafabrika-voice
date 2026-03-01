@@ -1,0 +1,26 @@
+{
+  "requiredFiles": ["README.md", "docs/REPO_MAP.md", "AGENTS.md"],
+  "ignorePatterns": ["node_modules/**", "dist/**", "package-lock.json"],
+  "lineRules": [
+    {
+      "pattern": "src/**/*.ts",
+      "maxLines": 180
+    },
+    {
+      "pattern": "test/**/*.ts",
+      "maxLines": 350
+    },
+    {
+      "pattern": "docs/**/*.md",
+      "maxLines": 250
+    },
+    {
+      "pattern": "README.md",
+      "maxLines": 200
+    },
+    {
+      "pattern": "AGENTS.md",
+      "maxLines": 200
+    }
+  ]
+}
