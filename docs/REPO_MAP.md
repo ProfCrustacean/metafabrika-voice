@@ -21,11 +21,16 @@
 ├─ test/
 │  ├─ transcribe/
 │  ├─ helpers/
+│  ├─ fixtures/
 │  ├─ yandex.provider.test.ts
 │  └─ smoke.integration.test.ts
 ├─ docs/
 │  ├─ stt-service.md
 │  └─ REPO_MAP.md
+├─ integration-package/
+│  ├─ 00-README.md
+│  ├─ 01-architecture-and-flow.md
+│  └─ 02-api-endpoints.md
 ├─ scripts/
 │  ├─ check-agent-readability.mjs
 │  └─ check-docs-sync.mjs
@@ -66,6 +71,7 @@
 - Config parsing tests: `test/config.test.ts`
 - Provider unit tests: `test/yandex.provider.test.ts`
 - Smoke path (ffmpeg + mocked upstream): `test/smoke.integration.test.ts`
+- Short RU real-audio fixture set: `test/fixtures/sps-ru/` (`manifest.json` + mp3 files)
 
 ## Quality Gates
 

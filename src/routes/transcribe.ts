@@ -38,6 +38,7 @@ export interface RegisterTranscribeRouteOptions {
   provider: SttProvider;
   apiKeyRegistry: ApiKeyRegistry;
   ffmpegPath: string;
+  ffprobePath: string;
   ffmpegTimeoutMs: number;
   maxAudioSeconds: number;
   maxInFlightTranscriptions: number;
@@ -90,7 +91,7 @@ export async function registerTranscribeRoute(
 
         const durationSeconds = await probeDurationSeconds(
           uploadedAudio,
-          "ffprobe",
+          options.ffprobePath,
           options.ffmpegTimeoutMs,
         );
         if (durationSeconds > options.maxAudioSeconds) {

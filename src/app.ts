@@ -36,6 +36,7 @@ export async function buildApp(options: BuildAppOptions) {
     options.readinessCheck ||
     createFfmpegReadinessCheck(
       options.config.ffmpegPath,
+      options.config.ffprobePath,
       options.config.ffmpegTimeoutMs,
     );
 
@@ -129,6 +130,7 @@ export async function buildApp(options: BuildAppOptions) {
     provider: options.provider,
     apiKeyRegistry,
     ffmpegPath: options.config.ffmpegPath,
+    ffprobePath: options.config.ffprobePath,
     ffmpegTimeoutMs: options.config.ffmpegTimeoutMs,
     maxAudioSeconds: options.config.maxAudioSeconds,
     maxInFlightTranscriptions: options.config.maxInFlightTranscriptions,
@@ -145,25 +147,26 @@ export async function buildApp(options: BuildAppOptions) {
   app.options("/v1/transcribe", async (_request, reply) => {
     reply.status(204).send();
   });
-
   app.get("/health", async () => ({ status: "ok" }));
-
   app.get("/ready", async (_request, reply) => {
-    const ffmpeg = await readinessCheck();
-
-    if (!ffmpeg.ok) {
-      reply.status(503).send({
-        status: "not_ready",
-        checks: { ffmpeg: "error" },
-        details: { ffmpeg: ffmpeg.message || "ffmpeg check failed" },
-      });
+    const dependencies = await readinessCheck();
+    const checks = {
+      ffmpeg: dependencies.ffmpeg.ok ? "ok" : "error",
+      ffprobe: dependencies.ffprobe.ok ? "ok" : "error",
+    };
+    if (!dependencies.ok) {
+      const details: Record<string, string> = {};
+      if (!dependencies.ffmpeg.ok) {
+        details.ffmpeg = dependencies.ffmpeg.message || "ffmpeg check failed";
+      }
+      if (!dependencies.ffprobe.ok) {
+        details.ffprobe =
+          dependencies.ffprobe.message || "ffprobe check failed";
+      }
+      reply.status(503).send({ status: "not_ready", checks, details });
       return;
     }
-
-    reply.status(200).send({
-      status: "ready",
-      checks: { ffmpeg: "ok" },
-    });
+    reply.status(200).send({ status: "ready", checks });
   });
 
   return app;

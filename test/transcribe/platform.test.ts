@@ -168,7 +168,11 @@ describe("POST /v1/transcribe platform behavior", () => {
 
   it("returns ready when ffmpeg dependency check passes", async () => {
     const { app } = await createTestApp({
-      readinessCheck: async () => ({ ok: true }),
+      readinessCheck: async () => ({
+        ok: true,
+        ffmpeg: { ok: true },
+        ffprobe: { ok: true },
+      }),
     });
 
     const response = await app.inject({
@@ -179,7 +183,7 @@ describe("POST /v1/transcribe platform behavior", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
       status: "ready",
-      checks: { ffmpeg: "ok" },
+      checks: { ffmpeg: "ok", ffprobe: "ok" },
     });
 
     await app.close();
@@ -189,7 +193,11 @@ describe("POST /v1/transcribe platform behavior", () => {
     const { app } = await createTestApp({
       readinessCheck: async () => ({
         ok: false,
-        message: "ffmpeg binary not found",
+        ffmpeg: {
+          ok: false,
+          message: "ffmpeg binary not found",
+        },
+        ffprobe: { ok: true },
       }),
     });
 
@@ -201,7 +209,7 @@ describe("POST /v1/transcribe platform behavior", () => {
     expect(response.statusCode).toBe(503);
     expect(response.json()).toEqual({
       status: "not_ready",
-      checks: { ffmpeg: "error" },
+      checks: { ffmpeg: "error", ffprobe: "ok" },
       details: { ffmpeg: "ffmpeg binary not found" },
     });
 

@@ -6,10 +6,12 @@
 ## Validation
 
 - [ ] `npm run check:agent-readability`
+- [ ] `npm run check:docs-sync`
 - [ ] `npm run lint`
 - [ ] `npm run format:check`
 - [ ] `npm run build`
 - [ ] `npm test`
+- [ ] `npm run test:smoke`
 
 ## Agent Docs Sync
 

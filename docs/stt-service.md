@@ -20,7 +20,7 @@ Also supports:
 Operational endpoints:
 
 - `GET /health` (basic liveness)
-- `GET /ready` (readiness, includes `ffmpeg` dependency check)
+- `GET /ready` (readiness, includes `ffmpeg` + `ffprobe` dependency checks)
 - `GET /admin/metrics` (per-location usage metrics, admin key required)
 - `GET /admin/keys` (list location key states, admin key required)
 - `POST /admin/keys/:clientId/revoke` (disable one location key immediately)
@@ -76,12 +76,13 @@ All errors return JSON:
 {
   "error": {
     "code": "missing_file",
-    "message": "Audio file is required in form field 'audio'.",
-    "details": {}
+    "message": "Audio file is required in form field 'audio'."
   },
   "requestId": "req_01J..."
 }
 ```
+
+`details` is included only when an error needs extra context.
 
 Main error codes:
 
