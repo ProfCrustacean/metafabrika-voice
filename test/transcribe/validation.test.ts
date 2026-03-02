@@ -39,10 +39,10 @@ describe("POST /v1/transcribe validation", () => {
     expect(response.headers["x-request-id"]).toBeTruthy();
     expect(response.json()).toEqual({
       text: "поставь мойку у окна",
+      requestId: response.headers["x-request-id"],
     });
     expect(response.json()).not.toHaveProperty("language");
     expect(response.json()).not.toHaveProperty("provider");
-    expect(response.json()).not.toHaveProperty("requestId");
     expect(transcode).toHaveBeenCalledTimes(1);
     expect(provider.transcribe).toHaveBeenCalledTimes(1);
 
@@ -246,7 +246,10 @@ describe("POST /v1/transcribe validation", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ text: "допустимая длина" });
+    expect(response.json()).toEqual({
+      text: "допустимая длина",
+      requestId: response.headers["x-request-id"],
+    });
     expect(provider.transcribe).toHaveBeenCalledTimes(1);
 
     await app.close();

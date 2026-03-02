@@ -217,8 +217,10 @@ describeIfEnabled("smoke integration (optional)", () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ text: "тестовая команда" });
-
+    expect(response.json()).toEqual({
+      text: "тестовая команда",
+      requestId: response.headers["x-request-id"],
+    });
     expect(captured.length).toBe(1);
     expect(captured[0].url).toContain("/speech/v1/stt:recognize");
     expect(captured[0].url).toContain("lang=ru-RU");
@@ -261,7 +263,6 @@ describeIfEnabled("smoke integration (optional)", () => {
         },
         payload: multipart.payload,
       });
-
       expect(response.statusCode).toBe(200);
       expect(captured.length).toBe(1);
       expect(captured[0].contentType).toContain("audio/ogg;codecs=opus");
@@ -291,7 +292,6 @@ describeIfEnabled("smoke integration (optional)", () => {
       },
       payload: multipart.payload,
     });
-
     expect(response.statusCode).toBe(413);
     expect(response.json().error.code).toBe("payload_too_large");
     expect(captured.length).toBe(0);

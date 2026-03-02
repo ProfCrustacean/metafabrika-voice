@@ -4,35 +4,27 @@ import { apiKeyAuth } from "../middleware/apiKeyAuth.js";
 import { readUploadToBuffer } from "../audio/audioFileUtils.js";
 import { probeAudioDurationSeconds } from "../audio/probeAudioDurationSeconds.js";
 import { validateAudioMimeType } from "../audio/validateAudio.js";
-import {
-  TranscodedAudio,
-  transcodeToOggOpus,
-} from "../audio/transcodeToOggOpus.js";
+import { transcodeToOggOpus } from "../audio/transcodeToOggOpus.js";
 import { prepareAudioForProvider } from "../audio/prepareAudioForProvider.js";
 import { SttProvider } from "../providers/SttProvider.js";
+import { AppError, TRANSCRIBE_LANGUAGE } from "../types.js";
 import {
-  AppError,
-  SuccessResponseBody,
-  TRANSCRIBE_LANGUAGE,
-} from "../types.js";
+  IdempotencyBeginResult,
+  IdempotencyStore,
+} from "../idempotency/idempotencyStore.js";
 import {
   assertUploadNotTruncated,
+  buildIdempotencyFingerprint,
   createInFlightSlotAcquirer,
-  mapProviderError,
+  normalizeToAppError,
+  readOptionalHeader,
   readAudioFileOrThrow,
+  sendIdempotencyOutcome,
+  sendSuccessResponse,
 } from "./transcribeHelpers.js";
+import { ProbeDurationSecondsFn, TranscodeFn } from "./transcribeTypes.js";
 
-export type TranscodeFn = (
-  inputAudio: NodeJS.ReadableStream,
-  ffmpegPath: string,
-  timeoutMs: number,
-) => Promise<TranscodedAudio>;
-
-export type ProbeDurationSecondsFn = (
-  audio: Buffer,
-  ffprobePath: string,
-  timeoutMs: number,
-) => Promise<number>;
+export type { ProbeDurationSecondsFn, TranscodeFn } from "./transcribeTypes.js";
 
 export interface RegisterTranscribeRouteOptions {
   provider: SttProvider;
@@ -42,9 +34,12 @@ export interface RegisterTranscribeRouteOptions {
   ffmpegTimeoutMs: number;
   maxAudioSeconds: number;
   maxInFlightTranscriptions: number;
+  idempotencyTtlMs?: number;
   transcode?: TranscodeFn;
   probeDurationSeconds?: ProbeDurationSecondsFn;
 }
+
+const DEFAULT_IDEMPOTENCY_TTL_MS = 10 * 60 * 1000;
 
 export async function registerTranscribeRoute(
   app: FastifyInstance,
@@ -56,6 +51,9 @@ export async function registerTranscribeRoute(
   const acquireInFlightSlot = createInFlightSlotAcquirer(
     options.maxInFlightTranscriptions,
   );
+  const idempotencyStore = new IdempotencyStore({
+    ttlMs: options.idempotencyTtlMs ?? DEFAULT_IDEMPOTENCY_TTL_MS,
+  });
 
   app.route({
     method: "POST",
@@ -64,10 +62,9 @@ export async function registerTranscribeRoute(
     handler: async (request, reply) => {
       let releaseSlot = () => {};
       let cleanupAudio = async () => {};
+      let idempotencyDecision: IdempotencyBeginResult | undefined;
 
       try {
-        releaseSlot = acquireInFlightSlot();
-
         if (!request.isMultipart()) {
           throw new AppError(
             "malformed_request",
@@ -77,10 +74,12 @@ export async function registerTranscribeRoute(
         }
 
         const file = await readAudioFileOrThrow(request);
-        validateAudioMimeType(file.mimetype);
-        assertUploadNotTruncated(file);
+        request.idempotencyKey = readOptionalHeader(
+          request.headers["idempotency-key"],
+        );
 
         const uploadedAudio = await readUploadToBuffer(file.file);
+        assertUploadNotTruncated(file);
         if (!uploadedAudio.length) {
           throw new AppError(
             "empty_audio",
@@ -88,6 +87,42 @@ export async function registerTranscribeRoute(
             "Uploaded audio file is empty.",
           );
         }
+
+        if (request.idempotencyKey && request.apiClientId) {
+          const scopeKey = `${request.apiClientId}:${request.idempotencyKey}`;
+          const fingerprint = buildIdempotencyFingerprint(
+            uploadedAudio,
+            file.mimetype,
+          );
+          idempotencyDecision = idempotencyStore.begin(scopeKey, fingerprint);
+
+          if (idempotencyDecision.kind === "conflict") {
+            throw new AppError(
+              "idempotency_conflict",
+              409,
+              "Idempotency key was reused with a different payload.",
+            );
+          }
+
+          if (idempotencyDecision.kind === "replay") {
+            sendIdempotencyOutcome(
+              reply,
+              request.id,
+              idempotencyDecision.outcome,
+            );
+            return;
+          }
+
+          if (idempotencyDecision.kind === "wait") {
+            const waitedOutcome = await idempotencyDecision.waitForOutcome();
+            sendIdempotencyOutcome(reply, request.id, waitedOutcome);
+            return;
+          }
+        }
+
+        validateAudioMimeType(file.mimetype);
+
+        releaseSlot = acquireInFlightSlot();
 
         const durationSeconds = await probeDurationSeconds(
           uploadedAudio,
@@ -122,14 +157,16 @@ export async function registerTranscribeRoute(
           requestId: request.id,
         });
 
-        const payload: SuccessResponseBody = {
-          text: result.text,
-        };
-
-        reply.status(200).send(payload);
+        if (idempotencyDecision?.kind === "execute") {
+          idempotencyDecision.finishSuccess(result.text);
+        }
+        sendSuccessResponse(reply, result.text, request.id);
       } catch (error) {
-        const mapped = mapProviderError(error);
-        throw mapped ?? error;
+        const appError = normalizeToAppError(error);
+        if (idempotencyDecision?.kind === "execute") {
+          idempotencyDecision.finishError(appError);
+        }
+        throw appError;
       } finally {
         await cleanupAudio();
         releaseSlot();

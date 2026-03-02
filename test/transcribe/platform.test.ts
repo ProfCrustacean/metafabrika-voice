@@ -111,7 +111,12 @@ describe("POST /v1/transcribe platform behavior", () => {
     });
 
     expect(secondResponse.statusCode).toBe(503);
-    expect(secondResponse.json().error.code).toBe("service_busy");
+    expect(secondResponse.headers["retry-after"]).toBe("1");
+    expect(secondResponse.json().error).toMatchObject({
+      code: "service_busy",
+      retryable: true,
+      retryAfterSeconds: 1,
+    });
 
     await firstRequest;
     await app.close();
@@ -153,7 +158,8 @@ describe("POST /v1/transcribe platform behavior", () => {
       headers: {
         origin: "https://app.example.com",
         "access-control-request-method": "POST",
-        "access-control-request-headers": "content-type,x-api-key",
+        "access-control-request-headers":
+          "content-type,x-api-key,idempotency-key,x-request-id",
       },
     });
 
@@ -161,6 +167,18 @@ describe("POST /v1/transcribe platform behavior", () => {
     expect(response.headers["access-control-allow-origin"]).toBe("*");
     expect(response.headers["access-control-allow-headers"]).toContain(
       "X-API-Key",
+    );
+    expect(response.headers["access-control-allow-headers"]).toContain(
+      "Idempotency-Key",
+    );
+    expect(response.headers["access-control-allow-headers"]).toContain(
+      "X-Request-Id",
+    );
+    expect(response.headers["access-control-expose-headers"]).toContain(
+      "X-Request-Id",
+    );
+    expect(response.headers["access-control-expose-headers"]).toContain(
+      "Retry-After",
     );
 
     await app.close();

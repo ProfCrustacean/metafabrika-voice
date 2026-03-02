@@ -36,6 +36,7 @@ export interface CreateTestAppOptions {
   provider?: SttProvider;
   transcode?: TranscodeFn;
   probeDurationSeconds?: ProbeDurationSecondsFn;
+  idempotencyTtlMs?: number;
   readinessCheck?: () => Promise<FfmpegReadinessResult>;
 }
 
@@ -97,6 +98,7 @@ export async function createTestApp(options?: CreateTestAppOptions) {
     probeDurationSeconds:
       options?.probeDurationSeconds ||
       (vi.fn().mockResolvedValue(1) as ProbeDurationSecondsFn),
+    idempotencyTtlMs: options?.idempotencyTtlMs,
     readinessCheck: options?.readinessCheck,
     logger: false,
   });

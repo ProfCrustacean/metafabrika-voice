@@ -28,7 +28,12 @@ describe("POST /v1/transcribe provider errors", () => {
     });
 
     expect(response.statusCode).toBe(504);
-    expect(response.json().error.code).toBe("upstream_timeout");
+    expect(response.headers["retry-after"]).toBe("2");
+    expect(response.json().error).toMatchObject({
+      code: "upstream_timeout",
+      retryable: true,
+      retryAfterSeconds: 2,
+    });
 
     await app.close();
   });
@@ -49,7 +54,41 @@ describe("POST /v1/transcribe provider errors", () => {
     });
 
     expect(response.statusCode).toBe(502);
-    expect(response.json().error.code).toBe("upstream_error");
+    expect(response.headers["retry-after"]).toBe("2");
+    expect(response.json().error).toMatchObject({
+      code: "upstream_error",
+      retryable: true,
+      retryAfterSeconds: 2,
+    });
+
+    await app.close();
+  });
+
+  it("marks upstream_error as non-retryable for provider 4xx", async () => {
+    const provider = {
+      name: "yandex",
+      transcribe: vi.fn(async () => {
+        throw new UpstreamProviderError("Bad upstream request", 400, {
+          providerStatus: 400,
+          providerErrorCode: "bad_request",
+        });
+      }),
+    } satisfies SttProvider;
+    const { app } = await createTestApp({ provider });
+    const multipart = buildAudioMultipart();
+
+    const response = await postTranscribe({
+      app,
+      multipart,
+    });
+
+    expect(response.statusCode).toBe(502);
+    expect(response.headers["retry-after"]).toBeUndefined();
+    expect(response.json().error).toMatchObject({
+      code: "upstream_error",
+      retryable: false,
+    });
+    expect(response.json().error).not.toHaveProperty("retryAfterSeconds");
 
     await app.close();
   });
@@ -70,7 +109,10 @@ describe("POST /v1/transcribe provider errors", () => {
     });
 
     expect(response.statusCode).toBe(422);
-    expect(response.json().error.code).toBe("no_speech_detected");
+    expect(response.json().error).toMatchObject({
+      code: "no_speech_detected",
+      retryable: false,
+    });
 
     await app.close();
   });

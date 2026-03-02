@@ -55,4 +55,5 @@
 
 - Project overview: `README.md`
 - API docs: `docs/stt-service.md`
+- Integration handoff package: `integration-package/00-README.md`
 - Repo map: `docs/REPO_MAP.md`

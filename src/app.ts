@@ -11,10 +11,7 @@ import {
 import { SttProvider } from "./providers/SttProvider.js";
 import { buildRequestId } from "./utils/requestId.js";
 import { createIpRateLimitGuard } from "./middleware/rateLimit.js";
-import {
-  createFfmpegReadinessCheck,
-  FfmpegReadinessResult,
-} from "./utils/ffmpegReadiness.js";
+import { createFfmpegReadinessCheck } from "./utils/ffmpegReadiness.js";
 import { buildLoggerOptions } from "./utils/loggerConfig.js";
 import { ApiKeyRegistry } from "./auth/apiKeyRegistry.js";
 import { ApiUsageMetrics } from "./metrics/apiUsageMetrics.js";
@@ -25,7 +22,8 @@ interface BuildAppOptions {
   provider: SttProvider;
   transcode?: TranscodeFn;
   probeDurationSeconds?: ProbeDurationSecondsFn;
-  readinessCheck?: () => Promise<FfmpegReadinessResult>;
+  idempotencyTtlMs?: number;
+  readinessCheck?: ReturnType<typeof createFfmpegReadinessCheck>;
   logger?: boolean;
 }
 
@@ -33,7 +31,7 @@ export async function buildApp(options: BuildAppOptions) {
   const apiKeyRegistry = new ApiKeyRegistry(options.config.serviceApiKeys);
   const apiUsageMetrics = new ApiUsageMetrics();
   const readinessCheck =
-    options.readinessCheck ||
+    options.readinessCheck ??
     createFfmpegReadinessCheck(
       options.config.ffmpegPath,
       options.config.ffprobePath,
@@ -52,7 +50,13 @@ export async function buildApp(options: BuildAppOptions) {
   await app.register(cors, {
     origin: "*",
     methods: ["POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "X-API-Key"],
+    allowedHeaders: [
+      "Content-Type",
+      "X-API-Key",
+      "Idempotency-Key",
+      "X-Request-Id",
+    ],
+    exposedHeaders: ["X-Request-Id", "Retry-After"],
   });
 
   await app.register(multipart, {
@@ -134,6 +138,7 @@ export async function buildApp(options: BuildAppOptions) {
     ffmpegTimeoutMs: options.config.ffmpegTimeoutMs,
     maxAudioSeconds: options.config.maxAudioSeconds,
     maxInFlightTranscriptions: options.config.maxInFlightTranscriptions,
+    idempotencyTtlMs: options.idempotencyTtlMs,
     transcode: options.transcode,
     probeDurationSeconds: options.probeDurationSeconds,
   });
@@ -144,9 +149,9 @@ export async function buildApp(options: BuildAppOptions) {
     apiUsageMetrics,
   });
 
-  app.options("/v1/transcribe", async (_request, reply) => {
-    reply.status(204).send();
-  });
+  app.options("/v1/transcribe", async (_request, reply) =>
+    reply.code(204).send(),
+  );
   app.get("/health", async () => ({ status: "ok" }));
   app.get("/ready", async (_request, reply) => {
     const dependencies = await readinessCheck();
@@ -168,6 +173,5 @@ export async function buildApp(options: BuildAppOptions) {
     }
     reply.status(200).send({ status: "ready", checks });
   });
-
   return app;
 }

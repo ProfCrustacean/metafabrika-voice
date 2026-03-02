@@ -1,0 +1,138 @@
+{
+  "dataset": "sps-corpus-2.0-2025-12-05-ru",
+  "language": "ru",
+  "samples": [
+    {
+      "audioId": 71087,
+      "file": "spontaneous-speech-ru-71087.mp3",
+      "durationMs": 5796,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой самый полезный совет вы когда-либо получали?",
+      "referenceTranscription": "Никогда не сдавайся. А если будет трудно - сдавайся.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 34821
+    },
+    {
+      "audioId": 71200,
+      "file": "spontaneous-speech-ru-71200.mp3",
+      "durationMs": 5400,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой ваш любимый способ поддерживать физическую активность?",
+      "referenceTranscription": "Я люблю бегать! И ходить гулять.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 32445
+    },
+    {
+      "audioId": 71085,
+      "file": "spontaneous-speech-ru-71085.mp3",
+      "durationMs": 8388,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой жанр музыки вам нравится и почему?",
+      "referenceTranscription": "Наверное, фолк-музыка, рок-музыка на стыке вот этих двух направлений.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 50373
+    },
+    {
+      "audioId": 71093,
+      "file": "spontaneous-speech-ru-71093.mp3",
+      "durationMs": 8496,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какие блюда вы обычно готовите дома?",
+      "referenceTranscription": "Обычную яичницу или что-нибудь очень простое, так как нет ни сил ни времени.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 51021
+    },
+    {
+      "audioId": 71192,
+      "file": "spontaneous-speech-ru-71192.mp3",
+      "durationMs": 10440,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой ваш любимый способ расслабиться после тяжелого дня?",
+      "referenceTranscription": "Какого-то единого способа нет. На что глаз падёт, тем и занимаюсь.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 62685
+    },
+    {
+      "audioId": 71194,
+      "file": "spontaneous-speech-ru-71194.mp3",
+      "durationMs": 10116,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой самый необычный предмет у вас дома?",
+      "referenceTranscription": "Акустическое пианино столетней давности. Как тебе такой необычный предмет?",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 60741
+    },
+    {
+      "audioId": 71196,
+      "file": "spontaneous-speech-ru-71196.mp3",
+      "durationMs": 9936,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой ваш любимый способ украшать дом к праздникам?",
+      "referenceTranscription": "Честно говоря, после того, как у меня закончилось детство, я перестал украшать дом к праздникам.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 59661
+    },
+    {
+      "audioId": 71080,
+      "file": "spontaneous-speech-ru-71080.mp3",
+      "durationMs": 15300,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой фильм или сериал вы недавно смотрели и что он вам запомнился?",
+      "referenceTranscription": "Недавно пересматривала сверхъестественное и-и-и... запомнилось оно мне абсолютной дичью, которая началась начиная с восьмого сезона.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 91845
+    },
+    {
+      "audioId": 71083,
+      "file": "spontaneous-speech-ru-71083.mp3",
+      "durationMs": 15228,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какие экологические проблемы волнуют вас больше всего?",
+      "referenceTranscription": "Наверное, запасы пресной воды. А так стараюсь больше придерживаться философии Карлина и не беспокоиться обо всём подряд.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 91413
+    },
+    {
+      "audioId": 71205,
+      "file": "spontaneous-speech-ru-71205.mp3",
+      "durationMs": 15768,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой ваш любимый напиток в холодное время года?",
+      "referenceTranscription": "Чай. Я люблю чаёвничать. Особенно в холодное время года. Он помогает согреться. А ещё об него можно греть ручки, и это очень приятно, если тебе холодно.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 94653
+    },
+    {
+      "audioId": 71193,
+      "file": "spontaneous-speech-ru-71193.mp3",
+      "durationMs": 9720,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какой ваш любимый способ проводить время в одиночестве?",
+      "referenceTranscription": "Практически всё, чем я занимаюсь в одиночестве, мне нравится. И вряд ли я могу отдать предпочтение чему-то конкретному.",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 58365
+    },
+    {
+      "audioId": 71091,
+      "file": "spontaneous-speech-ru-71091.mp3",
+      "durationMs": 5040,
+      "split": "test",
+      "votes": 1,
+      "prompt": "Какое ваше любимое блюдо русской кухни и почему?",
+      "referenceTranscription": "Борщ! Борщ, борщ, борщ!",
+      "sourceCorpus": "sps-corpus-2.0-2025-12-05-ru",
+      "bytes": 30285
+    }
+  ]
+}

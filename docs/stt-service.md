@@ -37,6 +37,11 @@ Send a location key in this header on every `POST` request:
 Use one key per location/device group. Keys can be revoked instantly through the
 admin control endpoints.
 
+Optional request headers for client control/debugging:
+
+- `Idempotency-Key: <key>` (dedupe retries/double submits for 10 minutes on one VM)
+- `X-Request-Id: <client-trace-id>` (if absent, server generates one)
+
 ## Request Format
 
 - Content type: `multipart/form-data`
@@ -64,7 +69,8 @@ HTTP `200`
 
 ```json
 {
-  "text": "поставь мойку у окна"
+  "text": "поставь мойку у окна",
+  "requestId": "req_01J..."
 }
 ```
 
@@ -76,13 +82,15 @@ All errors return JSON:
 {
   "error": {
     "code": "missing_file",
-    "message": "Audio file is required in form field 'audio'."
+    "message": "Audio file is required in form field 'audio'.",
+    "retryable": false
   },
   "requestId": "req_01J..."
 }
 ```
 
 `details` is included only when an error needs extra context.
+`retryAfterSeconds` is included for retryable errors when guidance is available and matches `Retry-After` header.
 
 Main error codes:
 
@@ -99,9 +107,16 @@ Main error codes:
 - `unsupported_format` (`415`)
 - `corrupted_audio` (`422`)
 - `no_speech_detected` (`422`)
+- `idempotency_conflict` (`409`)
 - `upstream_error` (`502`)
 - `upstream_timeout` (`504`)
 - `internal_error` (`500`)
+
+Retryability policy:
+
+- Retryable: `rate_limited`, `service_busy`, `upstream_timeout`, `internal_error`
+- `upstream_error`: retryable only for transient upstream failures (e.g. provider `429`/`5xx`)
+- Non-retryable: all other codes
 
 `payload_too_large` is detected during upload stream handling before audio
 transcoding, so oversized payloads fail early without spending ffmpeg CPU.
@@ -109,13 +124,26 @@ transcoding, so oversized payloads fail early without spending ffmpeg CPU.
 `audio_too_long` is returned when measured clip duration exceeds `MAX_AUDIO_SECONDS`
 (default `29`).
 
+`idempotency_conflict` is returned when the same `Idempotency-Key` is reused
+with different audio payload.
+
+Idempotency behavior with same `apiClientId + Idempotency-Key` + same payload:
+
+- In-flight duplicate waits for current processing result.
+- Success and expensive non-retryable processing errors are replayed for 10 minutes.
+- Retryable errors are not cached, so the same key can trigger a new attempt.
+- Malformed requests without readable audio payload are not idempotency-cached.
+- Cheap validation errors (for example `unsupported_format`) are not idempotency-cached.
+- Store is bounded in-memory (single VM) and may evict oldest cached entries under heavy key churn.
+
 ## CORS
 
 Configured for browser apps on other domains:
 
 - `Access-Control-Allow-Origin: *`
-- `Access-Control-Allow-Headers: Content-Type, X-API-Key`
+- `Access-Control-Allow-Headers: Content-Type, X-API-Key, Idempotency-Key, X-Request-Id`
 - `Access-Control-Allow-Methods: POST, OPTIONS`
+- `Access-Control-Expose-Headers: X-Request-Id, Retry-After`
 
 ## Setup
 

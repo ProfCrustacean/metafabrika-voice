@@ -26,6 +26,7 @@ export type ErrorCode =
   | "unsupported_format"
   | "corrupted_audio"
   | "no_speech_detected"
+  | "idempotency_conflict"
   | "upstream_error"
   | "upstream_timeout"
   | "internal_error";
@@ -53,6 +54,8 @@ export interface ErrorResponseBody {
   error: {
     code: ErrorCode;
     message: string;
+    retryable: boolean;
+    retryAfterSeconds?: number;
     details?: Record<string, unknown>;
   };
   requestId: string;
@@ -60,6 +63,7 @@ export interface ErrorResponseBody {
 
 export interface SuccessResponseBody {
   text: string;
+  requestId: string;
 }
 
 export interface RuntimeConfig {
